@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>Zipf's Law Analysis & Market Volatility</title><meta name="description" content="Study word-frequency distributions in daily news and test their relationship with subsequent stock market volatility."><style>:root{--ink:#1b2737;--muted:#718091;--rule:#d9dee4;--navy:#151c28;--blue:#174ea6;--red:#ad4f48;--green:#43715e;--paper:#fff;--aside:#f6f4ef;--sans:'Segoe UI',Tahoma,Arial,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:#fff;color:var(--ink);font:13px/1.49 var(--sans);-webkit-font-smoothing:antialiased}button,input,select{font:inherit}button{cursor:pointer}a{color:inherit}h1,h2,h3,h4,p{margin:0}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.topline{display:flex;height:49px;background:var(--navy);border-top:3px solid var(--blue);color:#f4f6f9;align-items:center;justify-content:space-between;padding:0 25px;gap:15px}.brand{font-weight:650;font-size:15px;letter-spacing:-.025em}.brand a{text-decoration:none}.brand span{font-size:12px;color:#b3bcca;font-weight:400;letter-spacing:0}.topline nav{display:flex;align-items:center;gap:21px;font-size:12px}.topline nav>span{font-size:11px;color:#aab2be}.topline nav a{color:#c5d3e8;text-decoration:none;border-bottom:1px solid #707e92}.linkbutton{font-size:11px;color:var(--blue);background:transparent;border:0;padding:0;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}.topline .linkbutton{color:#d1daea;text-decoration:none;border-bottom:1px solid #8996a8;font-size:12px}
+.mast{padding:23px 28px 18px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;gap:18px}.mast h1{font-size:27px;font-weight:650;letter-spacing:-.035em;line-height:1.18}.mast p{margin-top:6px;font-size:12px;color:#5e6979}.state{display:flex;gap:9px;align-items:center;font-size:11px;color:#747e8b;max-width:240px}.dot{height:7px;width:7px;flex:none;background:#c3a06b;border-radius:50%}.dot.ready{background:#448768}.dot.bad{background:var(--red)}.note-band{display:flex;justify-content:space-between;align-items:center;gap:20px;border-bottom:1px solid var(--rule);background:#fcfcfb;padding:11px 28px}.note-copy{display:flex;align-items:baseline;gap:13px;min-width:0}.note-copy strong{font-size:11px;white-space:nowrap}.note-copy span{font-size:11px;color:#5c6571}.note-band>span{font-size:10px;color:#89909b;max-width:245px;text-align:right}
+.workspace{max-width:1740px;display:grid;grid-template-columns:minmax(0,1fr) 307px;gap:0;margin:auto;align-items:start;border-left:1px solid #f2f3f4;border-right:1px solid #f2f3f4}.results{min-width:0;padding:23px 29px 0}.results-title{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-bottom:17px}.kicker{font-size:10px;color:#818b97;letter-spacing:.08em}.results-title h2{font-size:21px;letter-spacing:-.025em;font-weight:650;line-height:1.25}.results-title p{font-size:11px;color:#6d7988;margin-top:5px}.ghost{border:1px solid #cfd6dc;background:#fff;color:#546276;padding:7px 9px;font-size:11px;white-space:nowrap}.ghost:disabled{color:#b0b6bb}.metric-row{border-top:1px solid #aab2bc;border-bottom:1px solid #aab2bc;display:grid;grid-template-columns:1.25fr 1fr .85fr 1fr}.measure{min-width:0;padding:15px 15px 14px 0}.measure label{font-size:11px;color:#647283}.measure strong{display:block;font-weight:650;font-size:25px;letter-spacing:-.035em;line-height:1.25;margin-top:7px;font-variant-numeric:tabular-nums}.measure.lead strong{font-size:30px}.measure small{display:block;color:#8b939f;font-size:10px;margin-top:4px}
+.viz{margin-top:25px;min-width:0}.sect-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.sect-head h3{font-size:14px;font-weight:650}.sect-head>span{font-size:10px;color:#9096a0;text-align:right}.viz-desc{font-size:11px;color:#7b8590;line-height:1.6;margin-top:7px;max-width:750px}.legend{display:flex;gap:16px;align-items:center;margin-top:13px;font-size:11px;color:#687382;flex-wrap:wrap}.legend>span{display:flex;align-items:center;gap:7px}.line{width:20px;height:0;border-top:2px solid;display:inline-block}.lblue{border-color:var(--blue)}.lred{border-color:var(--red)}.lgray{border-color:#9da8b6;border-top-style:dashed}.lgreen{border-color:var(--green)}.canvas-box{height:290px;position:relative;margin-top:6px;overflow:hidden}.canvas-box.tall{height:315px}.canvas-box.zipf{height:202px;margin-top:10px}.canvas-box canvas{width:100%;height:100%;display:block}.chart-foot{font-size:10px;color:#808a97;border-top:1px solid var(--rule);padding-top:7px;line-height:1.5}.under-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:9px;border-top:1px solid var(--rule);padding-top:11px}.under-metrics small{display:block;font-size:10px;color:#7d8995}.under-metrics b{display:block;font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;margin-top:4px}.bottom-grid{display:grid;grid-template-columns:.95fr 1.3fr;gap:26px;margin-top:25px}.bottom-grid .viz{border-top:1px solid #bfc5cd;padding-top:13px;margin-top:0}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;text-align:right;white-space:nowrap;font-size:11px;margin-top:10px;font-variant-numeric:tabular-nums}td,th{border-bottom:1px solid #edf0f1;padding:9px 8px 9px 0;font-weight:400}th{font-size:10px;color:#7d8691;border-bottom:1px solid #bbc4cd}td:first-child,th:first-child{text-align:left}.footnote{font-size:10px;color:#8a939e;margin-top:13px}.results footer{padding:18px 0;border-top:1px solid var(--rule);margin-top:32px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:11px;color:#8d96a0}
+.controls{align-self:start;background:var(--aside);border:1px solid #d9ddd6;margin:18px 18px 18px 9px;border-radius:17px;overflow:hidden}.aside-top{padding:16px 17px;background:#eeeeea;border-bottom:1px solid #dce1db;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:650}.aside-top small{font-size:10px;font-weight:400;color:#7b858f}.control-section{padding:16px 17px 17px;border-bottom:1px solid #e0e4de}.control-section h3{font-size:13px;font-weight:650;margin-bottom:12px}.control-section label{display:block;font-size:11px;color:#515e6e;margin-top:11px}.control-section h3+label{margin-top:0}.control-section input[type=date],.control-section select,.control-section input[type=file]{display:block;margin-top:5px;width:100%;border:1px solid #c9cfc8;border-radius:9px;background:#fff;padding:8px 9px;color:#283545;font-size:11px;min-width:0;height:35px}.control-section input[type=file]{height:auto;max-width:100%;padding:7px 8px;font-size:10px}.control-section input[type=range]{width:100%;margin-top:13px;accent-color:#25569e}.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}.helper{font-size:10px;color:#818b95;line-height:1.48;margin-top:10px}.slider-name{display:flex!important;justify-content:space-between}.slider-name output{color:#263d61;font-weight:600}.retry{margin-top:12px}.run-box{padding:18px 17px 9px}.run-btn{display:flex;justify-content:space-between;align-items:center;width:100%;background:#194f9c;color:#fff;border:0;border-radius:11px;padding:12px 13px;font-size:12px;font-weight:650}.run-btn:hover{background:#113b78}.run-btn:disabled{opacity:.5;cursor:default}.run-box p{font-size:10px;color:#7d8893;line-height:1.5;margin-top:11px;overflow-wrap:anywhere}.run-box p.error{color:var(--red)}.source-panel{border-top:1px solid #dee2dc;margin:12px 17px 0;padding:13px 0 17px}.source-panel h4{font-size:10px;color:#6c7782;font-weight:650}.source-panel p{font-size:10px;color:#838c94;margin-top:7px;line-height:1.6}.source-panel a{display:block;font-size:10px;color:#365d92;margin-top:8px;text-decoration:underline;text-underline-offset:3px}
+.methods{width:min(665px,calc(100vw - 26px));max-height:min(87vh,780px);border:1px solid #a9b3bf;background:white;box-shadow:0 15px 40px #101c2c35;padding:31px 34px;overflow:auto;color:#2e3742}.methods::backdrop{background:#0a1a2e85}.methods h2{font-size:24px;margin:7px 0 15px}.methods p{font-size:12px;color:#525d6a;line-height:1.68;margin:0 0 15px}.methods b{color:#202b39}.method-close{position:absolute;right:14px;top:12px;font-size:23px;line-height:1;background:transparent;border:0;color:#5b6877;width:32px;height:32px}
+@media(max-width:1090px){.workspace{grid-template-columns:minmax(0,1fr) 280px}.results{padding:21px}.controls{margin-right:12px}.bottom-grid{grid-template-columns:1fr}.metric-row{grid-template-columns:repeat(2,1fr)}.measure:nth-child(3),.measure:nth-child(4){border-top:1px solid var(--rule)}}
+@media(max-width:780px){.topline{padding:0 16px}.topline nav>span{display:none}.mast{padding:19px 17px;display:block}.mast h1{font-size:25px}.state{margin-top:10px}.note-band{padding:10px 17px;display:block}.note-copy{display:block}.note-copy span{display:block;margin-top:5px}.note-band>span{display:block;text-align:left;margin-top:5px}.workspace{display:flex;flex-direction:column}.controls{order:1;margin:15px 17px 0;width:calc(100% - 34px)}.controls form{display:grid;grid-template-columns:1fr 1fr}.control-section:nth-child(odd){border-right:1px solid #e0e4de}.run-box{grid-column:1/-1}.results{order:2;width:100%;padding:24px 17px 0}.metric-row{grid-template-columns:repeat(4,minmax(0,1fr))}.measure:nth-child(3),.measure:nth-child(4){border-top:0}.under-metrics{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:620px){.topline nav{gap:12px}.brand span{display:none}.controls form{display:block}.control-section:nth-child(odd){border-right:0}.metric-row{grid-template-columns:repeat(2,1fr)}.measure:nth-child(3),.measure:nth-child(4){border-top:1px solid var(--rule)}.results-title{display:block}.ghost{margin-top:9px}.canvas-box{height:230px}.canvas-box.tall{height:240px}.under-metrics{grid-template-columns:repeat(2,1fr)}.sect-head{display:block}.sect-head>span{display:block;text-align:left;margin-top:3px}.bottom-grid{gap:20px}.methods{padding:28px 20px}}
+
+/* v07.2 navigation and meaningful error display; otherwise retain v05 typography and layout. */
+.topline nav .nav-tab{border:0;text-decoration:none;color:#b7c4d8;font-size:12px;line-height:1.5;padding:4px 0}.topline nav .nav-tab.active{color:white;border-bottom:1px solid #b6c6df}.topline nav .nav-tab:hover{color:white}.topline nav{gap:18px}
+.load-details{white-space:pre-line;overflow-wrap:anywhere;color:#946045!important;line-height:1.6!important;margin-top:9px!important;display:none}.load-details:not(:empty){display:block}.load-details[data-state="okay"]{color:#496956!important}.source-panel .source-label{color:#6e7882;font-size:10px}
+@media(max-width:450px){.topline nav{gap:11px}.topline nav .nav-tab,.topline .linkbutton{font-size:11px}}
+
+.real-dataset-flag{font-size:10px;letter-spacing:.02em;color:#496c57;margin:0 0 11px;border-left:3px solid #5e876e;padding:6px 10px;background:#f7faf7}
+.lyellow{border-color:#b78c44;border-top-style:dashed}
+.extra-comparison{margin-top:0;border-top:0;padding-top:8px;grid-template-columns:repeat(2, minmax(0,1fr));max-width:50%}
+@media(max-width:620px){.extra-comparison{max-width:none}}
+
+/* v08.1: analysis button state. Existing layout and typography unchanged. */
+.run-btn.is-loading{cursor:progress;opacity:.8;background:#194f9c}
+.run-btn.is-loading:hover{background:#194f9c}
+.run-btn.is-loading span:last-child{
+  font-size:0;width:15px;height:15px;border:2px solid rgba(255,255,255,.38);
+  border-top-color:#fff;border-radius:50%;animation:mq-loading 0.75s linear infinite;
+}
+@keyframes mq-loading{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){
+ .run-btn.is-loading span:last-child{animation:none;border-top-color:#fff}
+}
+
+/* v08.2: Display the exact input, usable, training and holdout periods. */
+.date-audit{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;border-top:1px solid var(--rule);padding:12px 0 4px;margin-top:8px}
+.date-audit>div{min-width:0}.date-audit span{font-size:10px;color:#798390;display:block}
+.date-audit b{display:block;font-size:11px;line-height:1.55;font-weight:600;font-variant-numeric:tabular-nums;color:#3a4655;margin-top:3px;overflow-wrap:anywhere}
+.date-explanation{font-size:10.5px;line-height:1.5;color:#7a8591;margin:6px 0 16px}
+@media(max-width:1000px){.date-audit{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}}
+@media(max-width:490px){.date-audit{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v08.3: Full training/holdout timelines retain the v05 layout. */
+.canvas-box.tall{height:320px}
+
+/* v08.4: simple chart-only smoothing switch for the first signal chart. */
+.signal-legend-bar{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:10px 18px;margin-top:12px}
+.signal-legend-bar .legend{margin-top:0}
+.display-control{display:flex;align-items:center;gap:8px;font-size:10.5px;color:#748191;white-space:nowrap}
+.display-control select{height:29px;border:1px solid #cbd2da;border-radius:5px;background:#fff;color:#394658;font-size:11px;padding:3px 24px 3px 9px;cursor:pointer}
+.signal-display-note{font-size:10px;color:#7f8994;line-height:1.5;margin:5px 0 4px}
+@media(max-width:620px){.signal-legend-bar{align-items:start}.display-control{width:100%;justify-content:flex-start}}
+
+/* v08.5: typography and hierarchy only. All analysis/rendering scripts are unchanged. */
+.app-header{display:flex;align-items:baseline;justify-content:space-between;gap:25px;background:#fff;border-bottom:1px solid #d8dde3;min-height:70px;padding:20px 30px 17px;max-width:none}
+.app-header h1{font-family:var(--sans);font-size:25px;font-weight:650;line-height:1.2;letter-spacing:-.034em;color:#1b2737;white-space:nowrap}
+.app-header nav{display:flex;align-items:center;gap:23px;flex-wrap:wrap;font-size:12px}
+.app-header nav a,.app-header .linkbutton{color:#515e70;font-weight:500;font-size:12px;line-height:1.5;text-decoration:none;white-space:nowrap;padding:4px 0;border:0;background:transparent}
+.app-header nav .nav-tab.active{color:#174ea6;border-bottom:2px solid #174ea6;font-weight:600}
+.app-header nav a:hover,.app-header nav button:hover{color:#174ea6}
+.app-header nav button{border:0;border-bottom:1px solid #929eac}
+.workspace{border-left:0;border-right:0;grid-template-columns:minmax(0,1fr) 316px;gap:0}
+.results{padding:23px 32px 0}
+.results-title{margin-bottom:6px;align-items:center}
+.results-title h2{font-size:15px;letter-spacing:0;font-weight:650}
+.ghost{border-radius:5px;padding:7px 11px;font-weight:500}
+.real-dataset-flag{display:inline-flex;max-width:100%;margin:7px 0 17px;padding:6px 10px;border:1px solid #d7e4d8;border-radius:4px;background:#f9fbf9;color:#3f6e54;font-size:10.5px;font-weight:550;letter-spacing:0}
+.metric-row{margin-bottom:7px}
+.measure label{font-size:11.5px;color:#47576a;font-weight:550}
+.measure small{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.viz{margin-top:28px}
+.sect-head h3{font-size:16px;letter-spacing:-.014em;font-weight:620}
+.signal-legend-bar{margin-top:13px}
+.legend{font-size:11.5px;color:#556478}
+.display-control{font-size:11.5px;color:#4f5b6b}
+.canvas-box.tall{height:320px}
+.chart-details,.meta-details{color:#677382;margin:11px 0 0;font-size:11px}
+.chart-details summary,.meta-details summary,.source-panel summary{cursor:pointer;width:max-content;max-width:100%;font-weight:550;color:#596c80;user-select:none}
+.chart-details summary:hover,.meta-details summary:hover,.source-panel summary:hover{color:#174ea6}
+.chart-details p,.meta-details p{font-size:11px;line-height:1.65;margin:10px 0 0;color:#6f7c89}
+.chart-details .signal-display-note,.chart-details .chart-foot{border:0;padding:3px 0;margin-top:4px;font-size:10.5px}
+.chart-details .viz-desc{margin:9px 0 8px;max-width:750px}
+.meta-details{padding:0 0 12px;margin:0 0 12px;border-bottom:1px solid #e9ecf0}
+.meta-details .run-summary{margin:9px 0 4px}
+.meta-details .date-audit{margin-top:8px;padding-top:8px}
+.meta-details .date-explanation{margin:10px 0 0}
+.under-metrics small{font-size:11px;color:#5e6d7d}
+.footnote{margin-bottom:3px}
+.results footer{font-size:11px}
+.results footer span{color:#687787}
+.controls{margin:16px 17px 22px 8px;background:#f6f4ef}
+.aside-top{font-size:14px;font-weight:600;padding:16px 17px;background:#f0efeb}
+.aside-top small{margin-left:8px;font-size:10px;letter-spacing:.02em;font-weight:500}
+.status-strip{display:flex;align-items:start;gap:8px;margin:0;padding:10px 17px;border-bottom:1px solid #e0e4de;font-size:11px;line-height:1.5;color:#697584;overflow-wrap:anywhere}
+.status-strip .dot{margin-top:4px}
+.control-section h3{font-size:13px}
+.control-section label{font-size:11.5px;color:#39495b}
+.source-panel{display:block}
+.source-panel summary{font-size:11px}
+.source-panel[open] h4{margin-top:11px}
+.source-panel h4{font-size:10px}
+.methods h3{font-size:14px;margin:15px 0 8px;color:#2b394c}
+.method-notes{padding-left:20px;margin:8px 0 12px;color:#5b6570;font-size:12px;line-height:1.7}
+.method-notes li{margin-bottom:6px}
+@media(max-width:1090px){.workspace{grid-template-columns:minmax(0,1fr) 291px}.results{padding-left:22px;padding-right:22px}}
+@media(max-width:780px){.app-header{padding:19px 17px;align-items:start;flex-wrap:wrap;min-height:0;gap:11px}.app-header nav{gap:20px;width:100%}.results{padding:20px 17px 0}.controls{margin:14px 17px 0}}
+@media(max-width:460px){.app-header h1{font-size:23px}.app-header nav{gap:16px}.app-header nav a,.app-header .linkbutton{font-size:11.5px}.results-title{gap:9px}.results-title h2{font-size:15px}.ghost{font-size:10px;padding:6px 8px}.real-dataset-flag{line-height:1.5}.sect-head h3{font-size:15px}}
+
+/* v08.6 site navigation and centered home. Core analysis styles and scripts retained. */
+.site-navigation{height:67px;background:#fff;border-bottom:1px solid #dde1e6;padding:0 clamp(18px,3vw,46px);display:flex;align-items:center;justify-content:flex-end}
+.site-navigation nav{display:flex;align-items:stretch;gap:33px;height:100%}
+.site-navigation .site-link{display:inline-flex;align-items:center;position:relative;color:#485262;font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap}
+.site-navigation .site-link:hover{color:#174ea6}
+.site-navigation .site-link.active{color:#174ea6;font-weight:600}
+.site-navigation .site-link.active::after{content:"";height:2px;position:absolute;bottom:0;left:0;right:0;background:#174ea6}
+.site-navigation .site-etf{margin-left:19px}
+#homeView[hidden],#analysisView[hidden],#methodView[hidden]{display:none!important}
+.site-home{min-height:calc(100svh - 67px);display:flex;justify-content:center;align-items:center;padding:90px 22px 130px;background:#fff}
+.home-center{max-width:650px;text-align:center;margin:auto}
+.home-center h1{font-family:var(--sans);font-size:clamp(49px,7vw,72px);line-height:1.08;font-weight:620;letter-spacing:-.055em;margin:0;color:#192738}
+.home-center p{font-size:clamp(15px,2vw,17px);line-height:1.7;color:#495669;margin:25px auto 36px;max-width:535px;font-weight:400}
+.home-cta{display:inline-flex;align-items:center;justify-content:space-between;gap:40px;background:#194f9c;color:white;border-radius:6px;padding:12px 16px;text-decoration:none;font-weight:600;font-size:13px;min-width:167px}
+.home-cta:hover{background:#123d7e}
+.home-cta span{font-size:17px;font-weight:400}
+.home-secondary{display:block;width:max-content;margin:22px auto 0;color:#556477;text-decoration:underline;text-underline-offset:4px;text-decoration-color:#adb8c5;font-size:12px}
+.home-secondary:hover{color:#174ea6}
+.methodology-view{min-height:calc(100svh - 67px);padding:65px 25px 90px;background:#fff}
+.methodology-body{max-width:735px;margin:0 auto;color:#243345}
+.methodology-body h2{font-size:34px;letter-spacing:-.04em;font-weight:620;line-height:1.17;margin:0 0 35px}
+.methodology-body h3{font-size:17px;font-weight:600;letter-spacing:-.015em;margin:35px 0 16px}
+.methodology-body p{font-size:14px;line-height:1.85;color:#465468;margin:0 0 21px}
+.methodology-body p b{color:#243244;font-weight:600}
+.methodology-body .method-notes{font-size:13px;line-height:1.8;color:#465468;padding-left:19px}
+.methodology-body .method-notes li{margin:0 0 10px}
+.methodology-body .method-end{border-top:1px solid #e0e4e9;padding-top:22px;margin-top:37px}
+.methodology-body .method-end a{color:#174ea6;text-decoration:underline;text-underline-offset:3px}
+@media(max-width:600px){
+ .site-navigation{padding:0 14px;height:60px}
+ .site-navigation nav{width:100%;gap:clamp(12px,4.2vw,24px);justify-content:space-between}
+ .site-navigation .site-link{font-size:11px}
+ .site-navigation .site-etf{margin-left:0}
+ .site-home{min-height:calc(100svh - 60px);padding:70px 24px 95px}
+ .home-center h1{font-size:51px}
+ .home-center p{font-size:15px;margin:21px auto 30px}
+ .methodology-view{padding:44px 19px 70px}
+ .methodology-body h2{font-size:28px}
+}
+
+/* v08.7. Visual presentation only. No changes to model or inputs. */
+.site-navigation{justify-content:center;position:relative;z-index:4;background:#fbfbf9;}
+.site-navigation nav{justify-content:center;gap:clamp(26px,3.5vw,55px)}
+.site-navigation .site-etf{margin-left:0}
+.site-navigation .site-link{font-size:13px;letter-spacing:.002em;font-weight:500;color:#3f4956}
+.site-navigation .site-link.active{color:#1e334d;font-weight:600}
+.site-navigation .site-link.active::after{background:#304d70}
+.site-home{
+ background-color:#e8e9e2;
+ background-image:none;
+ background-size:cover;background-position:center center;
+ min-height:calc(100svh - 67px);padding:80px 24px 112px;
+}
+.home-center{max-width:740px;position:relative;transform:translateY(-6px)}
+.home-center h1{font-family:'Segoe UI',Tahoma,Arial,sans-serif;font-weight:590;font-size:clamp(50px,6.6vw,82px);line-height:1.04;letter-spacing:-.055em;color:#243241;white-space:normal}
+.home-center p{font-size:16px;line-height:1.7;max-width:565px;color:#334354;font-weight:400;margin:27px auto 33px;text-wrap:balance}
+.home-cta{border-radius:5px;background:#263e5b;padding:13px 19px;min-width:184px;gap:35px}
+.home-cta:hover{background:#142c4a}
+.home-secondary{font-size:12px;color:#495b6b;margin-top:21px}
+@media(max-width:620px){
+ .site-navigation{height:60px;padding:0 9px}
+ .site-navigation nav{gap:clamp(11px,4.5vw,23px);justify-content:center;width:100%}
+ .site-navigation .site-link{font-size:11px}
+ .site-home{min-height:calc(100svh - 60px);padding:60px 20px 85px;background-position:48% center}
+ .home-center{transform:none}
+ .home-center h1{font-size:clamp(45px,10vw,57px)}
+ .home-center p{font-size:15px;line-height:1.65;margin:22px auto 31px}
+}
+
+/* v08.8 – title legibility only; model controls and analysis untouched */
+.home-center{max-width:980px}
+.home-center h1{font-size:clamp(44px,5.15vw,69px);line-height:1.13;letter-spacing:-.052em;text-wrap:balance}
+.home-center p{max-width:600px}
+@media(max-width:600px){.home-center h1{font-size:clamp(38px,9.4vw,53px);line-height:1.13}}
+
+/* v08.11: only copy, background and information hierarchy change. */
+.site-home{
+  background:#e5e9e6!important;
+  background-image:none!important;
+  position:relative;isolation:isolate;overflow:hidden;
+}
+.site-home::before{
+  content:"";position:absolute;z-index:-1;inset:-14% auto -14% -7%;
+  width:34%;background:#d5dfd8;
+  transform:skewX(-13deg);pointer-events:none;
+}
+.site-home::after{
+  content:"";position:absolute;z-index:-1;right:7%;top:13%;bottom:13%;
+  border-left:1px solid #cad3ca;pointer-events:none;
+}
+.home-center{position:relative;z-index:1}
+.home-center h1{max-width:940px;margin-inline:auto;font-size:clamp(43px,5.5vw,74px);line-height:1.13}
+.home-center .home-cta{margin-top:28px}
+.results .real-dataset-flag{display:none!important}
+.bottom-grid{grid-template-columns:minmax(0,1fr)!important}
+.bottom-grid>.tabsection{display:none!important}
+.bottom-grid>.narrow{max-width:760px;width:100%}
+.methodology-body h2{margin-bottom:25px}
+.methodology-body p{line-height:1.68;margin-bottom:15px}
+@media(max-width:600px){
+ .site-home::before{left:-15%;width:50%;}
+ .site-home::after{right:5%;top:7%;bottom:7%}
+ .home-center h1{font-size:clamp(34px,8.8vw,54px)}
+ .home-center .home-cta{margin-top:20px}
+}
+
+/* v08.12: homepage background only. No extra decoration or geometry. */
+.site-home{
+ background:#efede8!important;
+ background-image:url("data:image/webp;base64,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")!important;
+ background-size:cover!important;
+ background-position:center center!important;
+}
+.site-home::before,.site-home::after{content:none!important;display:none!important}
+
+</style></head><body>
+<header class="site-navigation">
+ <nav aria-label="Site navigation">
+  <a href="#home" data-page="home" class="site-link active" aria-current="page">Home</a>
+  <a href="#analysis" data-page="analysis" class="site-link">Analysis</a>
+  <a class="site-link site-etf" href="etf-desk.html">ETF backtest</a>
+  <a href="#methodology" data-page="methodology" class="site-link">Methodology</a>
+ </nav>
+ <!-- Kept for the original methodology dialog handler and accessibility. -->
+ <button id="methodOpen" type="button" hidden aria-hidden="true" tabindex="-1">Methods</button>
+</header>
+<main id="homeView" class="site-home">
+ <div class="home-center">
+  <h1>Zipf's Law Analysis & Market Volatility</h1>
+  
+  <a class="home-cta" href="#analysis" data-page="analysis">Run the analysis <span aria-hidden="true">↗</span></a>
+  <a class="home-secondary" href="#methodology" data-page="methodology">How it works</a>
+ </div>
+</main>
+<section id="analysisView" hidden aria-label="Zipf analysis">
+
+<div class="workspace">
+ <main class="results">
+  <div class="results-title"><h2>Results</h2><button id="exportBtn" class="ghost" disabled>Export daily results ↗</button></div>
+  <div class="real-dataset-flag" id="realSourceFlag">WAITING FOR REAL HISTORICAL DATA · NO GENERATED RESULTS</div>
+  <details class="meta-details"><summary>Data window &amp; run details</summary>
+ <p id="runSummary" class="run-summary">Awaiting actual historical data. No mock or generated results.</p>
+ <div class="date-audit" aria-label="Actual analysis dates">
+   <div><span>Selected study window</span><b id="selectedWindow">—</b></div>
+   <div><span>Usable news dates</span><b id="usableWindow">—</b></div>
+   <div><span>Training dates</span><b id="trainingWindow">—</b></div>
+   <div><span>Holdout / strategy</span><b id="testingWindow">—</b></div>
+  </div>
+  <p class="date-explanation" id="windowExplanation">Select a date range and run the analysis. Historical baselines use earlier observations. Charts show both training and holdout dates; strategy returns appear only during holdout.</p>
+  </details>
+ <div class="metric-row"><div class="measure lead"><label>Zipf score · test AUC</label><strong id="aucMetric">—</strong><small>0.50 = random discrimination</small></div><div class="measure"><label>Text-length baseline AUC</label><strong id="baselineMetric">—</strong><small>same dates / same target</small></div><div class="measure"><label>Pearson r</label><strong id="corrMetric">—</strong><small>signal vs forward |return|</small></div><div class="measure"><label>Holdout observations</label><strong id="sampleMetric">—</strong><small id="dateMetric">chronological split</small></div></div>
+  <section class="viz"><div class="sect-head"><h3>News score and market movement</h3></div><div class="signal-legend-bar"><div class="legend"><span><i class="line lblue"></i>Zipf deviation</span><span><i class="line lred"></i>Later absolute return</span></div><label class="display-control" for="signalDisplay">Display<select id="signalDisplay" aria-label="Signal chart smoothing"><option value="1">Raw data</option><option value="7">7-session average</option><option value="14" selected>14-session average</option><option value="30">30-session average</option></select></label></div><div class="canvas-box tall"><canvas id="signalChart" aria-label="Zipf deviation compared with subsequent absolute price returns"></canvas></div><details class="chart-details"><summary>Chart notes</summary><p class="viz-desc">Both lines span the available training and holdout observations. Values are independently scaled using training-period percentiles for visual comparison, not raw comparable units. The default display uses a trailing average to reduce daily noise.</p><p class="signal-display-note" id="displayModeNote">14-session trailing average · chart display only; metrics and exported results use original observations.</p><p class="chart-foot" id="thresholdCaption">—</p></details></section>
+  <section class="viz"><div class="sect-head"><h3>Strategy backtest</h3></div><div class="legend"><span><i class="line lblue"></i>Zipf filter</span><span><i class="line lgray"></i>Always invested</span><span><i class="line lgreen"></i>Length-only filter</span><span><i class="line lyellow"></i>Random control</span></div><div class="canvas-box"><canvas id="equityChart" aria-label="Zipf rule and index buy hold strategy comparison"></canvas></div><details class="chart-details"><summary>Chart timing</summary><p class="viz-desc">The grey benchmark covers training and test dates. Strategy lines begin only in the holdout and are normalized to $10,000 at the split. Earlier benchmark values are plotted relative to that same split-date base; holdout performance metrics use the unscaled strategy returns.</p></details><div class="under-metrics"><div><small>Strategy CAGR</small><b id="cagrMetric">—</b></div><div><small>Buy &amp; hold CAGR</small><b id="benchmarkCagr">—</b></div><div><small>Max drawdown</small><b id="drawdownMetric">—</b></div><div><small>Sharpe ratio</small><b id="sharpeMetric">—</b></div></div><div class="under-metrics extra-comparison"><div><small>Text-length rule CAGR</small><b id="lengthCagrMetric">—</b></div><div><small>Random-control CAGR</small><b id="randomCagrMetric">—</b></div></div></section>
+  <div class="bottom-grid"><section class="viz narrow"><div class="sect-head"><h3>Word frequency</h3><span id="zipfDayLabel">—</span></div><div class="canvas-box zipf"><canvas id="zipfChart" aria-label="Zipf rank frequency and fitted line"></canvas></div><p class="chart-foot" id="zipfDetails">Choose a day after the data loads.</p></section>
+   <section class="viz tabsection"><div class="sect-head"><h3>Daily observations</h3></div><div class="table-scroll"><table><thead><tr><th>Date</th><th>α</th><th>Deviation</th><th>Next |r|</th><th>Exposure</th></tr></thead><tbody id="dailyBody"><tr><td colspan="5">No observations yet.</td></tr></tbody></table></div><details class="chart-details"><summary>Date alignment</summary><p class="footnote">Text recorded on D is related to the close-to-close return from D+1 to D+2. Timestamps are not available; this is a conservative date alignment, not a trade-execution guarantee.</p></details></section></div>
+  <footer><span>Zipf's Law Analysis & Market Volatility</span><button id="methodFooter" class="linkbutton">Methodology &amp; limitations</button></footer>
+ </main>
+ <aside class="controls" aria-label="Research settings"><div class="aside-top"><span>Settings <small id="editState" hidden aria-hidden="true">LOADING</small></span><button class="linkbutton" id="resetBtn">Reset</button></div>
+  <div class="status-strip"><span class="dot" id="stateDot"></span><span id="dataStatus">Connecting to news &amp; price archives…</span></div>
+  <form id="settingsForm">
+   <section class="control-section"><h3>Dataset</h3><label>Source<select id="dataMode"><option value="demo">DJIA + world-news archive · actual data</option><option value="own">My own news + price files</option></select></label><div id="ownBox" hidden><label>News CSV<input id="newsFile" type="file" accept=".csv,text/csv"></label><label>Prices CSV<input id="priceFile" type="file" accept=".csv,text/csv"></label></div><button class="linkbutton retry" type="button" id="retryBtn">Reload source</button><p id="loadDetails" class="load-details" role="status" aria-live="polite"></p></section>
+   <section class="control-section"><h3>Text processing</h3><label>Rank limit<select id="rankCap"><option value="100">Top 100 terms</option><option value="200" selected>Top 200 terms</option><option value="400">Top 400 terms</option></select></label><div class="duo"><label>Min. frequency<select id="minCount"><option value="1" selected>1 occurrence</option><option value="2">2 occurrences</option></select></label><label>Stopwords<select id="stopwords"><option value="0" selected>Include</option><option value="1">Remove</option></select></label></div></section>
+   <section class="control-section"><h3>Research conditions</h3><label>Historical baseline<select id="lookback"><option value="30">30 prior samples</option><option value="60" selected>60 prior samples</option><option value="120">120 prior samples</option></select></label><div class="duo"><label>Large-move cutoff<select id="riskLevel"><option value="0.7">70th pct.</option><option value="0.8" selected>80th pct.</option><option value="0.9">90th pct.</option></select></label><label>Holdout share<select id="split"><option value="0.6">40% test</option><option value="0.7" selected>30% test</option><option value="0.8">20% test</option></select></label></div><div class="duo"><label>From<input id="startDate" type="date" value="2008-08-08"></label><label>To<input id="endDate" type="date" value="2016-07-01"></label></div></section>
+   <section class="control-section"><h3>Exposure rule</h3><label>Move to cash when the score is high<select id="signalTop"><option value="0.7">Top 30%</option><option value="0.8" selected>Top 20%</option><option value="0.9">Top 10%</option></select></label><label class="slider-name">Trading cost <output id="costDisplay">10 bp</output></label><input id="costBps" type="range" min="0" max="50" value="10" step="1"></section>
+   <div class="run-box"><button class="run-btn" type="submit" id="runBtn" disabled aria-label="Run analysis"><span>Run analysis</span><span>↗</span></button><p id="runStatus" role="status" aria-live="polite">Loading real historical data…</p></div>
+  </form><details class="source-panel"><summary>Data sources and licensing</summary><h4>Data source</h4><p id="dataProvenance">Real DJIA daily adjusted closes and Reddit r/worldnews top-25 headlines (2008–2016), collected by J. Sun (2016). This is not ticker-level financial news. CC BY-NC-SA 4.0.</p><p id="sourceLabel" class="source-label"></p><a href="https://www.kaggle.com/datasets/aaron7sun/stocknews" target="_blank" rel="noopener">Original dataset ↗</a><a href="https://github.com/para867/ISM-6390-Data-Science-Project" target="_blank" rel="noopener">CSV mirror ↗</a><a href="https://huggingface.co/datasets/Zihan1004/FNSPID" target="_blank" rel="noopener">FNSPID corpus ↗</a></details>
+ </aside>
+</div>
+</section>
+<section id="methodView" class="methodology-view" hidden aria-label="Methodology">
+ <article class="methodology-body"><h2>Methodology</h2>
+<p><b>Data.</b> The example pairs Reddit world-news headlines from 2008–2016 with DJIA adjusted closing prices (J. Sun, 2016). This is not ticker-specific news or the FNSPID dataset.</p>
+<p><b>Zipf score.</b> Words are counted and ranked each day. The negative slope of log(word frequency) against log(rank) is Zipf α. We compare that value with the median α of the previous N news days. Changes in text length are measured separately as a baseline.</p>
+<p><b>Dates.</b> Headlines only have dates, not reliable publication times. News dated D is compared with the return from the D+1 close to the D+2 close. The date controls limit which observations enter the study.</p>
+<p><b>Test.</b> Early observations set the thresholds. Two observations are removed at the split, and AUC and backtest returns use only the later holdout. High Zipf scores move the test strategy into cash; transaction costs are included.</p>
+<p><b>Limits.</b> Headline count, length and timing can affect the signal. Repeatedly changing settings risks overfitting. A correlation here does not establish prediction or causation.</p><p class="method-end"><a href="#analysis" data-page="analysis">Back to analysis ↗</a></p></article>
+</section>
+<dialog id="methods" class="methods"><button id="methodClose" class="method-close" aria-label="Close methodology">×</button><h2>Methodology</h2>
+<p><b>Data.</b> The example pairs Reddit world-news headlines from 2008–2016 with DJIA adjusted closing prices (J. Sun, 2016). This is not ticker-specific news or the FNSPID dataset.</p>
+<p><b>Zipf score.</b> Words are counted and ranked each day. The negative slope of log(word frequency) against log(rank) is Zipf α. We compare that value with the median α of the previous N news days. Changes in text length are measured separately as a baseline.</p>
+<p><b>Dates.</b> Headlines only have dates, not reliable publication times. News dated D is compared with the return from the D+1 close to the D+2 close. The date controls limit which observations enter the study.</p>
+<p><b>Test.</b> Early observations set the thresholds. Two observations are removed at the split, and AUC and backtest returns use only the later holdout. High Zipf scores move the test strategy into cash; transaction costs are included.</p>
+<p><b>Limits.</b> Headline count, length and timing can affect the signal. Repeatedly changing settings risks overfitting. A correlation here does not establish prediction or causation.</p></dialog>
+<script>/* INJECT_REAL_DATA_HERE */</script>
+<script>/* Mini Quant / language and market model. No dependencies. */
+(function(root, factory) {
+ const api = factory();
+ if(typeof module === 'object' && module.exports) module.exports = api;
+ root.ZipfEngine = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function(){
+ 'use strict';
+ const STOP = new Set('a an the and or of for to in on at with from by is are was were be been being as that this these those it its into not than then who whom when while he she they their his her has have had will would can could should may might which what why how about after before over under during through also one two three more most less some any all new said says say but so if no up down out off than across do does did just other another we you i us our your them there here where again last next because very between against around such like only'.split(' '));
+ const n = x => Number(x);
+ function csv(text) {
+  let rows=[], row=[], cell='', quote=false;
+  for(let i=0;i<text.length;i++){
+   const c=text[i]; if(quote){if(c==='"'&&text[i+1]==='"'){cell+='"';i++;}else if(c==='"')quote=false;else cell+=c;}
+   else if(c==='"')quote=true;
+   else if(c===','){row.push(cell);cell='';}
+   else if(c==='\n'){row.push(cell.replace(/\r$/,''));rows.push(row);row=[];cell='';}
+   else cell+=c;
+  }
+  if(quote)throw Error('CSV contains an unclosed quote.');
+  if(cell.length||row.length){row.push(cell.replace(/\r$/,''));rows.push(row);}
+  return rows;
+ }
+ function dateISO(value){
+  const s=String(value??'').trim();
+  let year,month,day,match;
+  if((match=s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T].*)?$/))){
+    [,year,month,day]=match;
+  }else if((match=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))){
+    // DJIA_table.csv uses US dates, e.g. 7/1/2016, while news uses ISO.
+    [,month,day,year]=match;
+  }else return '';
+  const y=Number(year),m=Number(month),d=Number(day);
+  const actual=new Date(Date.UTC(y,m-1,d));
+  if(actual.getUTCFullYear()!==y||actual.getUTCMonth()!==m-1||actual.getUTCDate()!==d)return '';
+  return `${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+ }
+ function newsCSV(raw){
+  const r=csv(raw);if(r.length<2)throw Error('No news rows found.');
+  const h=r.shift().map(v=>v.trim().toLowerCase().replace(/[^a-z0-9]/g,''));
+  const di=h.findIndex(v=>['date','published','publicationdate','datetime'].includes(v));
+  if(di<0)throw Error('News CSV requires a date column.');
+  const wide=h.map((v,i)=>/^top\d+$/.test(v)?i:-1).filter(i=>i>=0);
+  const ci=h.findIndex(v=>['headline','title','text','content','article'].includes(v));
+  if(!wide.length&&ci<0)throw Error('News CSV needs Top1…Top25 columns or a headline/title/text column.');
+  const out = new Map(); let count=0;
+  for(const cells of r){const d=dateISO(cells[di]);if(!d)continue;
+   const texts=(wide.length?wide.map(j=>cells[j]):[cells[ci]]).map(v=>String(v||'').replace(/^\s*b['"]([\s\S]*)['"]\s*$/,'$1').trim()).filter(v=>v&&!/^(nan|null|none)$/i.test(v));
+   if(!texts.length)continue;if(!out.has(d))out.set(d,[]);const arr=out.get(d);arr.push(...texts);count+=texts.length;
+  }
+  if(!out.size)throw Error('No usable news dated rows.');
+  return {days:out,count,first:[...out.keys()].sort()[0],last:[...out.keys()].sort().at(-1)};
+ }
+ function priceCSV(raw){
+  const r=csv(raw);if(r.length<3)throw Error('No prices in CSV.');
+  const h=r.shift().map(v=>v.trim().toLowerCase().replace(/[^a-z0-9]/g,''));
+  const di=h.indexOf('date');const pi=h.findIndex(v=>['adjclose','adjustedclose'].includes(v)) >= 0 ? h.findIndex(v=>['adjclose','adjustedclose'].includes(v)) : h.findIndex(v=>['close','price'].includes(v));
+  if(di<0||pi<0)throw Error('Prices CSV needs Date and Adj Close / Close.');
+  const m=new Map();for(const v of r){const d=dateISO(v[di]),p=n(String(v[pi]||'').replace(/,/g,''));if(d&&Number.isFinite(p)&&p>0)m.set(d,p);}
+  if(m.size<10)throw Error('Too few valid price observations.');
+  return [...m].sort((a,b)=>a[0].localeCompare(b[0])).map(([date,close])=>({date,close}));
+ }
+ function fitZipf(texts, cfg={}){
+  const f=new Map();let tokens=0;
+  for(const s of texts){for(const word of String(s).toLowerCase().match(/[a-z]+(?:'[a-z]+)?/g)||[]){if(cfg.stopwords&&STOP.has(word))continue;if(word.length<2)continue;f.set(word,(f.get(word)||0)+1);tokens++;}}
+  const ranked=[...f].filter(x=>x[1]>=Number(cfg.minCount||1)).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,Number(cfg.rankCap||200));
+  if(ranked.length<12)return null;
+  const pairs=ranked.map(([word,c],i)=>({word,frequency:c,rank:i+1,x:Math.log(i+1),y:Math.log(c)}));
+  const mx=pairs.reduce((a,x)=>a+x.x,0)/pairs.length, my=pairs.reduce((a,x)=>a+x.y,0)/pairs.length;
+  const xx=pairs.reduce((a,x)=>a+(x.x-mx)**2,0),xy=pairs.reduce((a,x)=>a+(x.x-mx)*(x.y-my),0);
+  if(xx===0)return null;
+  const slope=xy/xx,intercept=my-slope*mx;
+  const ss=pairs.reduce((a,x)=>a+(x.y-my)**2,0),err=pairs.reduce((a,x)=>a+(x.y-intercept-slope*x.x)**2,0);
+  return {alpha:-slope,r2:ss?1-err/ss:1,types:f.size,tokens,articles:texts.length,ranked:pairs,intercept};
+ }
+ function median(a){if(!a.length)return NaN;const v=a.slice().sort((a,b)=>a-b),j=v.length>>1;return v.length%2?v[j]:(v[j-1]+v[j])/2;}
+ function quantile(a,q){if(!a.length)return NaN;const s=[...a].sort((a,b)=>a-b);const x=(s.length-1)*q,j=Math.floor(x),k=Math.min(s.length-1,j+1);return s[j]+(s[k]-s[j])*(x-j);}
+ function rocAUC(scores,labels){let arr=scores.map((s,i)=>[s,labels[i]]).filter(([s,y])=>Number.isFinite(s)&&(y===0||y===1));const pos=arr.filter(x=>x[1]).length,neg=arr.length-pos;if(!pos||!neg)return NaN;arr.sort((a,b)=>a[0]-b[0]);let sum=0;for(let i=0;i<arr.length;){let j=i+1;while(j<arr.length&&arr[j][0]===arr[i][0])j++;for(let k=i;k<j;k++)if(arr[k][1])sum+=((i+1+j)/2);i=j;}return (sum-pos*(pos+1)/2)/(pos*neg);}
+ function pearson(x,y){const z=x.map((a,i)=>[a,y[i]]).filter(([a,b])=>Number.isFinite(a)&&Number.isFinite(b));if(z.length<3)return NaN;const a=z.reduce((s,v)=>s+v[0],0)/z.length,b=z.reduce((s,v)=>s+v[1],0)/z.length;let xy=0,xx=0,yy=0;for(const v of z){xy+=(v[0]-a)*(v[1]-b);xx+=(v[0]-a)**2;yy+=(v[1]-b)**2;}return xx&&yy?xy/Math.sqrt(xx*yy):NaN;}
+ function calcPerformance(returns){let nav=1,peak=1,mdd=0;let mean=0,variance=0;for(const r of returns){nav*=1+r;peak=Math.max(peak,nav);mdd=Math.min(mdd,nav/peak-1);mean+=r;}mean=returns.length?mean/returns.length:NaN;variance=returns.length>1?returns.reduce((s,r)=>s+(r-mean)**2,0)/(returns.length-1):NaN;const vol=Math.sqrt(variance),sharpe=vol?Math.sqrt(252)*mean/vol:NaN;return {final:nav-1,cagr:nav>0?nav**(252/returns.length)-1:NaN,mdd,sharpe,vol:vol*Math.sqrt(252)};}
+ function seeded(date){let x=2166136261;for(const c of date){x=Math.imul(x^c.charCodeAt(0),16777619);}x^=x<<13;x^=x>>>17;x^=x<<5;return (x>>>0)/4294967296;}
+ function analyze(news,prices,cfg){
+  const lookback=Number(cfg.lookback||60),rankCap=Number(cfg.rankCap||200),minCount=Number(cfg.minCount||1);
+  const cut=Number(cfg.testSplit||.70),riskLevel=Number(cfg.riskLevel||.8),signalTop=Number(cfg.signalTop||.8);
+  const costBps=Number(cfg.costBps||0),start=cfg.start,end=cfg.end;
+  if(!start||!end||!/^\d{4}-\d{2}-\d{2}$/.test(start)||!/^\d{4}-\d{2}-\d{2}$/.test(end))
+   throw Error('Select both From and To dates before running the analysis.');
+  if(start>end)throw Error('From must be on or before To. Please check the selected dates.');
+  const priceIndex=new Map(prices.map((d,i)=>[d.date,i]));
+  const fit=[];const keys=[...news.days.keys()].sort();
+  for(const date of keys){
+   if(date>end)break; // News after the selected end date cannot enter this study.
+   const i=priceIndex.get(date);if(i===undefined||i+2>=prices.length)continue;
+   const z=fitZipf(news.days.get(date),{stopwords:!!cfg.stopwords,minCount,rankCap});if(!z)continue;
+   fit.push({date,priceIndex:i,alpha:z.alpha,r2:z.r2,articles:z.articles,tokens:z.tokens,zipf:z,marketRet:prices[i+2].close/prices[i+1].close-1});
+  }
+  if(fit.length<lookback+80)throw Error(`Only ${fit.length} usable headline dates before the selected end. Try a wider date window or smaller historical baseline.`);
+  const observations=[];
+  for(let i=lookback;i<fit.length;i++){
+   const past=fit.slice(i-lookback,i),alphaMed=median(past.map(x=>x.alpha)),tokenMed=median(past.map(x=>x.tokens));
+   // Raw distance from trailing historical median; 1-day price buffer after undated headlines.
+   const row={...fit[i],alphaBaseline:alphaMed,riskScore:Math.abs(fit[i].alpha-alphaMed),lengthScore:Math.abs(fit[i].tokens-tokenMed),absForward:Math.abs(fit[i].marketRet)};
+   // D is the publication date. D+1 -> D+2 is the evaluated price move.
+   // Require BOTH the news date and the final price-close date inside the selection.
+   row.returnStartDate=prices[row.priceIndex+1].date;
+   row.returnEndDate=prices[row.priceIndex+2].date;
+   if(row.date>=start&&row.returnEndDate<=end)observations.push(row);
+  }
+  if(observations.length<120)throw Error(`Selected dates (${start} to ${end}) contain ${observations.length} usable sessions; at least 120 are needed. The final price-return date (D+2) must also fall within To.`);
+  const nTrain=Math.floor(observations.length*cut);if(nTrain<60||observations.length-nTrain<30)throw Error('The training/test split is too short.');
+  const train=observations.slice(0,nTrain-2),test=observations.slice(nTrain); // Two-session embargo: training outcomes cannot cross into the holdout.
+  const volatilityThreshold=quantile(train.map(x=>x.absForward),riskLevel);
+  const scoreThreshold=quantile(train.map(x=>x.riskScore),signalTop);
+  const lengthThreshold=quantile(train.map(x=>x.lengthScore),signalTop);
+  let riskNAV=1,buyNAV=1,lenNAV=1,randNAV=1,lastWeight=1,lastLength=1,lastRandom=1;
+  const testSeries=[];let i=0;
+  for(const r of test){
+   const held=r.riskScore>scoreThreshold?0:1,heldLen=r.lengthScore>lengthThreshold?0:1,heldRand=seeded(r.date)>signalTop?0:1;
+   const a=held*r.marketRet-(costBps/10000)*Math.abs(held-lastWeight),b=heldLen*r.marketRet-(costBps/10000)*Math.abs(heldLen-lastLength),c=heldRand*r.marketRet-(costBps/10000)*Math.abs(heldRand-lastRandom);
+   lastWeight=held;lastLength=heldLen;lastRandom=heldRand;
+   riskNAV*=1+a;lenNAV*=1+b;randNAV*=1+c;buyNAV*=1+r.marketRet;
+   testSeries.push({...r,highVol:r.absForward>=volatilityThreshold?1:0,held,heldLen,heldRand,netReturn:a,nav:riskNAV,benchmark:buyNAV,tokenNAV:lenNAV,randomNAV:randNAV});i++;
+  }
+  const labels=testSeries.map(x=>x.highVol);
+  return {selectedStart:start,selectedEnd:end,matchedStart:observations[0].date,matchedEnd:observations.at(-1).date,
+   trainStart:train[0].date,trainEnd:train.at(-1).date,testStart:test[0].date,testEnd:test.at(-1).date,
+   finalReturnDate:test.at(-1).returnEndDate,trainCount:train.length,testCount:test.length,volatilityThreshold,scoreThreshold,lengthThreshold,
+   auc:rocAUC(testSeries.map(x=>x.riskScore),labels),baselineAUC:rocAUC(testSeries.map(x=>x.lengthScore),labels),correlation:pearson(testSeries.map(x=>x.riskScore),testSeries.map(x=>x.absForward)),
+   // The full eligible timeline is returned for charting. Only holdout rows have
+   // simulated strategy NAVs; training and the two purged rows are not backtested.
+   coverage:fit.length,matched:observations.length,train,test:testSeries,
+   timeline:observations,holdoutIndex:nTrain,embargoStartIndex:nTrain-2,
+   strategy:calcPerformance(testSeries.map(x=>x.netReturn)),benchmark:calcPerformance(testSeries.map(x=>x.marketRet)),
+   tokenStrategy:calcPerformance(testSeries.map((x,i)=>(x.tokenNAV/(i?testSeries[i-1].tokenNAV:1))-1)),
+   randomStrategy:calcPerformance(testSeries.map((x,i)=>(x.randomNAV/(i?testSeries[i-1].randomNAV:1))-1))};
+ }
+ return {csv,newsCSV,priceCSV,fitZipf,quantile,median,rocAUC,pearson,analyze,calcPerformance};
+});
+</script>
+<script>/* UI for Zipf workbench. Data must come from a cited source or a user file. */
+'use strict';
+const E=ZipfEngine,$=id=>document.getElementById(id);
+// Same 2008–2016 dataset served from independent mirrors. No substitute or fabricated data.
+const mirrors=[
+ {name:'Project archive / GitHub',root:'https://raw.githubusercontent.com/para867/ISM-6390-Data-Science-Project/master/'},
+ {name:'NUS mirror / GitHub',root:'https://raw.githubusercontent.com/samuelkhoo/NUS-Fintech-Stock-Prediction-Project/master/'},
+ {name:'Project archive / jsDelivr',root:'https://cdn.jsdelivr.net/gh/para867/ISM-6390-Data-Science-Project@master/'},
+ {name:'NUS mirror / jsDelivr',root:'https://cdn.jsdelivr.net/gh/samuelkhoo/NUS-Fintech-Stock-Prediction-Project@master/'},
+];
+let news=null,prices=null,result=null,source='',loading=false,runNumber=0;
+let filenameNews='',filenamePrices='',dateInputsEdited=false,dateInputsInitialized=false;
+const fmt=n=>Number.isFinite(n)?n.toFixed(3):'—',percent=n=>Number.isFinite(n)?((n>0?'+':'')+(n*100).toFixed(2)+'%'):'—';
+function status(s,type){$('dataStatus').textContent=s;$('stateDot').className='dot'+(type?' '+type:'');}
+function changed(){if(news&&prices){
+ $('editState').textContent='CHANGED';
+ $('runStatus').textContent='Settings changed. Press Run analysis to recalculate the selected dates.';
+ if(result)$('runSummary').textContent='Previous results are shown. Run analysis to apply your updated settings.';
+}}
+function resize(can){const w=can.parentNode.clientWidth,h=can.parentNode.clientHeight;if(w<5||h<5)return null;const dpr=Math.min(devicePixelRatio||1,2);can.width=Math.round(w*dpr);can.height=Math.round(h*dpr);const ctx=can.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);return {ctx,w,h};}
+function plot(canvasId,lines,{min=null,max=null,zero=false,timeline=null,holdoutIndex=null,embargoStartIndex=null}={}){
+ const x=resize($(canvasId));if(!x)return;const{ctx,w,h}=x,m={l:44,r:12,t:26,b:30};const pw=w-m.l-m.r,ph=h-m.t-m.b;
+ const n=lines[0]?.data.length||0;
+ let yvals=lines.flatMap(a=>a.data.filter(Number.isFinite));if(!yvals.length||!n)return;
+ let lo=min??Math.min(...yvals),hi=max??Math.max(...yvals);if(zero)lo=Math.min(0,lo);if(lo===hi){lo-=1;hi+=1;}const pad=(hi-lo)*.07;if(min===null)lo-=pad;if(max===null)hi+=pad;
+ const px=i=>m.l+pw*i/Math.max(1,n-1),py=v=>m.t+ph-(v-lo)/(hi-lo)*ph;
+ // Backgrounds are tied to actual observation dates, not an arbitrary pixel split.
+ if(timeline&&holdoutIndex!==null){
+  const edge=px(Math.max(0,holdoutIndex-.5));
+  ctx.fillStyle='#f0f4f8';ctx.fillRect(m.l,m.t,Math.max(0,edge-m.l),ph);
+  ctx.fillStyle='#fff';ctx.fillRect(edge,m.t,Math.max(0,w-m.r-edge),ph);
+  if(embargoStartIndex!==null){
+   const e=px(Math.max(0,embargoStartIndex-.5));
+   ctx.fillStyle='#e5e9ee';ctx.fillRect(e,m.t,Math.max(0,edge-e),ph);
+  }
+  ctx.fillStyle='#5d6f85';ctx.font='10px Segoe UI, Arial';ctx.textAlign='left';
+  ctx.fillText('TRAINING',m.l+5,14);
+  ctx.textAlign='right';ctx.fillStyle='#345c91';ctx.fillText('HOLDOUT',w-m.r-4,14);
+  ctx.strokeStyle='#6686af';ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(edge,m.t-3);ctx.lineTo(edge,m.t+ph);ctx.stroke();ctx.setLineDash([]);
+ }
+ ctx.font='10px Segoe UI, Arial';ctx.lineWidth=1;ctx.textAlign='right';
+ for(let i=0;i<5;i++){const val=lo+(hi-lo)*i/4,y=py(val);ctx.strokeStyle='#e6eaf0';ctx.beginPath();ctx.moveTo(m.l,y);ctx.lineTo(w-m.r,y);ctx.stroke();ctx.fillStyle='#86919e';ctx.fillText((val>=1000?Math.round(val).toLocaleString():val.toFixed(2)),m.l-7,y+3);}
+ for(const line of lines){ctx.beginPath();ctx.lineWidth=line.width||1.8;ctx.strokeStyle=line.color;ctx.setLineDash(line.dash||[]);let open=false;
+  for(let i=0;i<line.data.length;i++){
+   const v=line.data[i];if(!Number.isFinite(v)){open=false;continue;}
+   const xx=px(i),yy=py(v);
+   if(!open){ctx.moveTo(xx,yy);open=true;}else ctx.lineTo(xx,yy);
+  }
+  ctx.stroke();ctx.setLineDash([]);
+ }
+ ctx.fillStyle='#737e8b';ctx.textAlign='center';ctx.font='10px Segoe UI, Arial';
+ if(timeline?.length){
+  // Evenly spaced labels provide context across the whole chosen window.
+  const ticks=Math.max(2,Math.min(6,Math.floor(pw/95)+1));
+  for(let j=0;j<ticks;j++){const i=Math.round((n-1)*j/(ticks-1));const date=timeline[i].date;
+   const label=j===0||j===ticks-1?date:date.slice(0,7);
+   ctx.textAlign=j===0?'left':j===ticks-1?'right':'center';ctx.fillText(label,px(i),h-7);
+  }
+ }else{ctx.textAlign='left';ctx.fillText(lines[0].start||'',m.l,h-7);ctx.textAlign='right';ctx.fillText(lines[0].end||'',w-13,h-7);}
+}
+function fitPlot(z){const x=resize($('zipfChart'));if(!x)return;const{ctx,w,h}=x,m={l:39,r:12,t:9,b:22},W=w-m.l-m.r,H=h-m.t-m.b;const pairs=z.ranked;if(!pairs.length)return;const maxX=Math.log(pairs.length),maxY=Math.log(pairs[0].frequency),minY=Math.min(-.1,Math.log(pairs.at(-1).frequency));
+ const X=v=>m.l+W*v/Math.max(maxX,.1),Y=v=>m.t+H-(v-minY)/(maxY-minY+.01)*H;
+ ctx.strokeStyle='#ebedf0';ctx.fillStyle='#888f9b';ctx.font='10px Segoe UI,Arial';for(let i=0;i<4;i++){let yi=m.t+H*i/3;ctx.beginPath();ctx.moveTo(m.l,yi);ctx.lineTo(w-8,yi);ctx.stroke();}
+ ctx.strokeStyle='#c2a3a1';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(X(0),Y(z.intercept));ctx.lineTo(X(maxX),Y(z.intercept-z.alpha*maxX));ctx.stroke();
+ ctx.fillStyle='#174ea6';for(const p of pairs){ctx.fillRect(X(p.x)-1.2,Y(p.y)-1.2,2.4,2.4);}ctx.fillStyle='#777f8c';ctx.fillText('log(rank) →',w-84,h-5);ctx.save();ctx.translate(11,h*.55);ctx.rotate(-Math.PI/2);ctx.fillText('log(freq.)',0,0);ctx.restore();
+}
+function normalizeLine(values,trainingValues){
+ // Scale the displayed series using training-only percentiles. This visual
+ // normalization does not affect the signal or its holdout evaluation.
+ const sorted=trainingValues.filter(Number.isFinite);
+ if(!sorted.length)return values.map(()=>NaN);
+ const q0=E.quantile(sorted,.05),q1=E.quantile(sorted,.95),span=q1-q0||1;
+ return values.map(v=>Number.isFinite(v)?Math.max(0,Math.min(1,(v-q0)/span)):NaN);
+}
+// Display-only trailing mean of the observed series. No future samples enter any point.
+// The research engine, AUC, regression, and backtest always use unsmoothed values.
+function trailingMean(values,window){
+ if(window<=1)return values.slice();
+ const out=Array(values.length).fill(NaN);let sum=0,count=0;
+ for(let i=0;i<values.length;i++){
+  const v=values[i];if(Number.isFinite(v)){sum+=v;count++;}
+  const j=i-window;
+  if(j>=0&&Number.isFinite(values[j])){sum-=values[j];count--;}
+  if(count>0)out[i]=sum/count;
+ }
+ return out;
+}
+function renderSignalChart(r){
+ const period={timeline:r.timeline,holdoutIndex:r.holdoutIndex,embargoStartIndex:r.embargoStartIndex};
+ const window=Number($('signalDisplay').value)||14;
+ const normScore=normalizeLine(r.timeline.map(x=>x.riskScore),r.train.map(x=>x.riskScore));
+ const normAbs=normalizeLine(r.timeline.map(x=>x.absForward),r.train.map(x=>x.absForward));
+ plot('signalChart',[
+  {data:trailingMean(normScore,window),color:'#174ea6',width:window>1?2.1:1.2},
+  {data:trailingMean(normAbs,window),color:'#ad4f48',width:window>1?1.9:1.2}
+ ],{min:0,max:1,...period});
+ const desc=window===1?'Raw daily observations':`${window}-session trailing average`;
+ $('displayModeNote').textContent=desc+' · chart display only; metrics and exported results use original observations.';
+}
+function render(){if(!result)return;let r=result;const test=r.test;$('aucMetric').textContent=fmt(r.auc);$('baselineMetric').textContent=fmt(r.baselineAUC);$('corrMetric').textContent=fmt(r.correlation);$('sampleMetric').textContent=r.testCount.toLocaleString();$('dateMetric').textContent=r.testStart+' to '+r.testEnd;
+ $('cagrMetric').textContent=percent(r.strategy.cagr);$('benchmarkCagr').textContent=percent(r.benchmark.cagr);$('drawdownMetric').textContent=percent(r.strategy.mdd);$('sharpeMetric').textContent=Number.isFinite(r.strategy.sharpe)?r.strategy.sharpe.toFixed(2):'—';$('lengthCagrMetric').textContent=percent(r.tokenStrategy.cagr);$('randomCagrMetric').textContent=percent(r.randomStrategy.cagr);
+ $('runSummary').textContent=`Run ${String(runNumber).padStart(3,'0')} · ${r.trainCount} training / ${r.testCount} holdout observations · ${source}`;
+ $('selectedWindow').textContent=r.selectedStart+'  →  '+r.selectedEnd;
+ $('usableWindow').textContent=r.matchedStart+'  →  '+r.matchedEnd;
+ $('trainingWindow').textContent=r.trainStart+'  →  '+r.trainEnd;
+ $('testingWindow').textContent=r.testStart+'  →  '+r.testEnd;
+ $('windowExplanation').textContent=`Charts cover all ${r.matched} usable observations (${r.matchedStart} to ${r.matchedEnd}). Pale blue = training, grey strip = 2-observation embargo, white = holdout (${r.testStart} to ${r.testEnd}). Strategy returns and reported metrics are holdout only. Earlier news may supply the ${$('lookback').value}-sample baseline; final outcome ends ${r.finalReturnDate}.`;
+ $('thresholdCaption').textContent=`Full selected-period timeline · training-only normalization (5th–95th percentiles). Training large-move cutoff: ${(r.volatilityThreshold*100).toFixed(2)}% absolute next-session return. The cutoff is fixed before evaluating the holdout.`;
+ // Both charts use the same full selected-period x-axis. Training values are
+ // displayed for historical context; they never enter the holdout statistics.
+ const timeline=r.timeline,split=r.holdoutIndex;
+ const period={timeline,holdoutIndex:split,embargoStartIndex:r.embargoStartIndex};
+ renderSignalChart(r);
+ // Benchmark provides the whole-history reference. Its scale is anchored to
+ // $10,000 immediately before holdout; strategy NAVs are holdout-only and share
+ // that same $10,000 start so earlier training performance is never invented.
+ let market=1;const rawMarket=timeline.map(x=>(market*=1+x.marketRet));
+ const reference=rawMarket[split-1];
+ const benchmark=rawMarket.map(v=>10000*v/reference);
+ const strategy=Array(timeline.length).fill(NaN);
+ const lengthFilter=Array(timeline.length).fill(NaN);
+ const randomFilter=Array(timeline.length).fill(NaN);
+ for(let i=0;i<test.length;i++){
+  const p=split+i;strategy[p]=test[i].nav*10000;
+  lengthFilter[p]=test[i].tokenNAV*10000;
+  randomFilter[p]=test[i].randomNAV*10000;
+ }
+ plot('equityChart',[
+  {data:strategy,color:'#174ea6',width:2},
+  {data:benchmark,color:'#9ba6b4',dash:[5,4]},
+  {data:lengthFilter,color:'#43715e'},
+  {data:randomFilter,color:'#b78c44',dash:[3,4]}
+ ],period);
+ const first=test[Math.min(9,test.length-1)];fitPlot(first.zipf);$('zipfDayLabel').textContent=first.date;$('zipfDetails').textContent=`α = ${first.alpha.toFixed(3)}  /  R² = ${first.zipf.r2.toFixed(3)}  /  ${first.articles} headlines  /  ${first.tokens} words · blue: counts, red: OLS fit`;
+ const body=$('dailyBody');body.replaceChildren();for(const row of [...test].slice(-10).reverse()){const tr=document.createElement('tr');for(const val of [row.date,row.alpha.toFixed(3),row.riskScore.toFixed(3),percent(row.absForward),row.held?'Index':'Cash']){const td=document.createElement('td');td.textContent=val;tr.append(td);}body.append(tr);}
+ $('exportBtn').disabled=false;$('editState').textContent='CALCULATED';$('runStatus').textContent='Analysis complete. Change a setting to rerun.';$('runStatus').classList.remove('error');
+}
+function clearResults(reason){
+ result=null;
+ $('exportBtn').disabled=true;
+ for(const id of ['aucMetric','baselineMetric','corrMetric','sampleMetric','cagrMetric','benchmarkCagr','drawdownMetric','sharpeMetric','lengthCagrMetric','randomCagrMetric'])$(id).textContent='—';
+ for(const id of ['selectedWindow','usableWindow','trainingWindow','testingWindow'])$(id).textContent='—';
+ $('dateMetric').textContent='No valid holdout';
+ $('runSummary').textContent=reason||'No result for selected dates.';
+ $('windowExplanation').textContent='Adjust the date range and press Run analysis.';
+ $('thresholdCaption').textContent='—';$('zipfDetails').textContent='No result for current settings.';$('zipfDayLabel').textContent='—';
+ $('dailyBody').innerHTML='<tr><td colspan="5">No observations for the selected dates.</td></tr>';
+ for(const id of ['signalChart','equityChart','zipfChart']){const c=$(id),ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);}
+}
+function config(){return {rankCap:+$('rankCap').value,minCount:+$('minCount').value,stopwords:$('stopwords').value==='1',lookback:+$('lookback').value,riskLevel:+$('riskLevel').value,signalTop:+$('signalTop').value,testSplit:+$('split').value,costBps:+$('costBps').value,start:$('startDate').value,end:$('endDate').value};}
+let analysisBusy=false;
+const nextPaint=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
+async function run(){
+ if(analysisBusy)return;
+ if(!news||!prices){
+  $('runStatus').textContent='Real historical news and price data are not loaded. Use Reload source, or prepare the offline archive once. No synthetic data are used.';
+  $('runStatus').classList.add('error');
+  return;
+ }
+ const btn=$('runBtn');
+ analysisBusy=true;
+ btn.disabled=true;
+ btn.classList.add('is-loading');
+ btn.setAttribute('aria-busy','true');
+ btn.querySelector('span:first-child').textContent='Loading…';
+ $('editState').textContent='RUNNING';
+ $('runStatus').textContent='Calculating Zipf scores and holdout results…';
+ $('runStatus').classList.remove('error');
+ try{
+  // Allow the browser to paint the loading state before synchronous computation.
+  await nextPaint();
+  const r=E.analyze(news,prices,config());
+  result=r;
+  runNumber++;
+  render();
+ }catch(e){
+  clearResults('Analysis could not run for the selected period.');
+  $('runStatus').textContent='Analysis failed: '+(e?.message||String(e));
+  $('runStatus').classList.add('error');
+  $('editState').textContent='ERROR';
+  console.error(e);
+ }finally{
+  analysisBusy=false;
+  btn.disabled=false;
+  btn.classList.remove('is-loading');
+  btn.removeAttribute('aria-busy');
+  btn.querySelector('span:first-child').textContent='Run analysis';
+ }
+}
+function install(n,p,s){const commonDates=new Set(p.map(x=>x.date));const shared=[...n.days.keys()].filter(k=>commonDates.has(k)).sort();if(shared.length<150)throw Error(`Only ${shared.length} overlapping news / price dates.`);news=n;prices=p;source=s;
+ $('runBtn').disabled=analysisBusy;
+ // On initial load default to the dataset coverage, unless the visitor has already edited it.
+ // Reloading a source must never silently replace a user's date selection.
+ if(!dateInputsInitialized&&!dateInputsEdited){$('startDate').value=shared[0];$('endDate').value=shared.at(-1);}
+ dateInputsInitialized=true;
+ for(const id of ['startDate','endDate']){$(id).min=shared[0];$(id).max=shared.at(-1);}
+ status(`${n.count.toLocaleString()} headlines  /  ${p.length.toLocaleString()} price rows`,'ready');$('sourceLabel').textContent=s+' / '+shared[0]+' to '+shared.at(-1);$('realSourceFlag').textContent='REAL HISTORICAL DATA · '+n.count.toLocaleString()+' headlines';$('dataProvenance').textContent=(s.startsWith('DJIA')?'Daily News for Stock Market Prediction. Reddit r/worldnews top headlines + DJIA index adjusted closes. Historical 2008–2016 sample.':'User-provided dated headlines and market index prices. Confirm publication timestamps and adjusted close definitions before relying on results.');run();}
+// Using the project site or GitHub Pages means local CSVs can be served from /data.
+// An HTML file opened directly cannot request local files via fetch; remote mirrors are tried instead.
+async function fetchWithTimeout(url,ms=13000){
+ const ctrl=new AbortController(),t=setTimeout(()=>ctrl.abort(),ms);
+ try{
+  const response=await fetch(url,{mode:'cors',signal:ctrl.signal,cache:'no-cache'});
+  if(!response.ok)throw Error(`HTTP ${response.status}`);
+  const raw=await response.text();
+  if(raw.length<1000)throw Error('File was unexpectedly short');
+  return raw;
+ }finally{clearTimeout(t);}
+}
+function showDetails(msg,okay=false){
+ const el=$('loadDetails');if(!el)return;el.textContent=msg;el.dataset.state=okay?'okay':'failed';
+}
+// IndexedDB is best-effort. It's allowed to fail in private browsing / restricted previews.
+const CACHE_DB='MiniQuant-News-Archive-v08',CACHE_KEY='DJIA-reddit-worldnews';
+function dbOpen(){return new Promise((resolve,reject)=>{
+ if(!('indexedDB' in window))return reject(Error('IndexedDB unavailable'));
+ const req=indexedDB.open(CACHE_DB,1);
+ req.onupgradeneeded=()=>req.result.createObjectStore('pairs');
+ req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+ });}
+async function cacheRead(){
+ const db=await dbOpen();try{return await new Promise((resolve,reject)=>{
+ const q=db.transaction('pairs','readonly').objectStore('pairs').get(CACHE_KEY);
+ q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+ });}finally{db.close();}
+}
+async function cacheWrite(bundle){
+ const db=await dbOpen();try{await new Promise((resolve,reject)=>{
+ const tx=db.transaction('pairs','readwrite');tx.objectStore('pairs').put(bundle,CACHE_KEY);
+ tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+ });}finally{db.close();}
+}
+async function pairAt(label,newsURL,priceURL,timeout=13000){
+ const [nRaw,pRaw]=await Promise.all([fetchWithTimeout(newsURL,timeout),fetchWithTimeout(priceURL,timeout)]);
+ // Reject archives where one file downloads but cannot be parsed.
+ const parsedNews=E.newsCSV(nRaw),parsedPrices=E.priceCSV(pRaw);
+ return {newsRaw:nRaw,pricesRaw:pRaw,n:parsedNews,p:parsedPrices,label};
+}
+async function loadAuto({refresh=false}={}){
+ if(loading)return;
+ loading=true;
+ $('runBtn').disabled=analysisBusy;$('runStatus').classList.remove('error');
+ showDetails('');status('Preparing verified historical sources…');
+ $('runStatus').textContent='Looking for the historical DJIA / world-news data.';
+ const problems=[];
+ try{
+  // The exported single-file version generated by scripts/prepare_site_data.py needs no network.
+  if(window.MINI_QUANT_EMBEDDED_DATA?.news&&window.MINI_QUANT_EMBEDDED_DATA?.prices){
+   const d=window.MINI_QUANT_EMBEDDED_DATA;
+   install(E.newsCSV(d.news),E.priceCSV(d.prices),'DJIA / Reddit world-news · REAL embedded archive');
+   showDetails('Offline archive included in this file.',true);return;
+  }
+  if(!refresh){
+   try{
+    const saved=await cacheRead();
+    if(saved?.news&&saved?.prices){
+     install(E.newsCSV(saved.news),E.priceCSV(saved.prices),'DJIA / Reddit world-news · real archived copy');
+     showDetails('Loaded from a previously downloaded dataset. Reload source checks the original archives.',true);
+     return;
+    }
+   }catch(e){problems.push('Browser cache: '+e.message);}
+  }
+  // Build-time data bundle is served from the same domain as the site; no cross-origin request.
+  if(location.protocol==='https:'||location.protocol==='http:'){
+   try{
+    status('Checking included dataset…');
+    const d=await pairAt('Bundled site archive','data/Combined_News_DJIA.csv','data/DJIA_table.csv',5000);
+    install(d.n,d.p,'DJIA / Reddit world-news · bundled site data');
+    showDetails('Source files supplied with this website.',true);
+    cacheWrite({news:d.newsRaw,prices:d.pricesRaw}).catch(()=>{});
+    return;
+   }catch(e){problems.push('Site data: '+e.message);}
+  }
+  // Contact independent hosts in two batches to avoid sequential multi-minute waits.
+  for(let batch=0;batch<mirrors.length;batch+=2){
+   const choices=mirrors.slice(batch,batch+2);
+   status(`Checking public archive ${batch+1}–${Math.min(batch+2,mirrors.length)}…`);
+   const attempted=await Promise.allSettled(choices.map(m=>pairAt(m.name,m.root+'Combined_News_DJIA.csv',m.root+'DJIA_table.csv')));
+   for(let i=0;i<attempted.length;i++){
+    const s=attempted[i];
+    if(s.status==='fulfilled'){
+     const d=s.value;
+     try{
+      install(d.n,d.p,'DJIA / Reddit world-news · '+d.label);
+      showDetails('Public source loaded. A browser copy is stored when permitted.',true);
+      cacheWrite({news:d.newsRaw,prices:d.pricesRaw}).catch(()=>{});
+      return;
+     }catch(e){problems.push(d.label+': '+e.message);}
+    }else problems.push(choices[i].name+': '+(s.reason?.message||'Fetch failed'));
+   }
+  }
+  status('Automatic data loading failed','bad');
+  const last=problems.filter(x=>!x.startsWith('Browser cache:'));
+  showDetails(`All online sources failed. ${last.slice(-3).join(' / ')}.\nIf your browser blocks these external archives, run PREPARE_REAL_DATA_WINDOWS.bat once with Python installed. It creates an offline HTML containing the actual data. No synthetic fallback is used.`);
+  $('runStatus').textContent='Could not reach historical archives from this browser. No results were fabricated. See the error above or use the included one-time real-data packager.';
+  $('runStatus').classList.add('error');console.warn('Automatic archive errors:',problems.join(' | '));
+ }finally{loading=false;}
+}
+async function readOwn(){const a=$('newsFile').files?.[0],b=$('priceFile').files?.[0];if(!a||!b)return;try{install(E.newsCSV(await a.text()),E.priceCSV(await b.text()),'Uploaded · '+a.name+' + '+b.name);}catch(e){$('runStatus').textContent='Import error: '+e.message;$('runStatus').classList.add('error');}}
+function csvEsc(x){const s=String(x??'');return /[",\r\n]/.test(s)?'"'+s.replaceAll('"','""')+'"':s;}
+$('exportBtn').addEventListener('click',()=>{if(!result)return;const rows=[['news_date','return_start_date','return_end_date','zipf_alpha','r_squared','headline_count','word_count','zipf_deviation','length_baseline','forward_abs_return','forward_return','market_exposure','strategy_NAV','buyhold_NAV','length_filter_NAV','random_filter_NAV'],...result.test.map(r=>[r.date,r.returnStartDate,r.returnEndDate,r.alpha,r.r2,r.articles,r.tokens,r.riskScore,r.lengthScore,r.absForward,r.marketRet,r.held,r.nav,r.benchmark,r.tokenNAV,r.randomNAV])];const blob=new Blob([rows.map(r=>r.map(csvEsc).join(',')).join('\r\n')],{type:'text/csv'}),url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='mini-quant-zipf-holdout.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);});
+$('signalDisplay').addEventListener('change',()=>{if(result)renderSignalChart(result);});
+$('settingsForm').addEventListener('submit',e=>{e.preventDefault();run();});
+for(const el of document.querySelectorAll('#settingsForm select,#settingsForm input[type=date],#settingsForm input[type=range]'))el.addEventListener('input',()=>{
+ if(el.type==='date')dateInputsEdited=true;
+ if(el.id==='costBps')$('costDisplay').textContent=el.value+' bp';changed();
+});
+$('dataMode').addEventListener('change',()=>{const own=$('dataMode').value==='own';$('ownBox').hidden=!own;if(own){status('Choose paired news / price CSV files');$('runStatus').textContent='Select both files to start the study.';$('runBtn').disabled=analysisBusy;news=null;prices=null;result=null;}else loadAuto();});
+$('retryBtn').addEventListener('click',()=>{if($('dataMode').value==='demo')loadAuto({refresh:true});else readOwn();});for(const id of ['newsFile','priceFile'])$(id).addEventListener('change',readOwn);
+$('resetBtn').addEventListener('click',()=>{for(const [key,val] of Object.entries({rankCap:'200',minCount:'1',stopwords:'0',lookback:'60',riskLevel:'0.8',signalTop:'0.8',split:'0.7',costBps:'10'}))$(key).value=val;$('costDisplay').textContent='10 bp';if(news&&prices){const dates=[...news.days.keys()].filter(x=>prices.some(p=>p.date===x)).sort();$('startDate').value=dates[0];$('endDate').value=dates.at(-1);dateInputsEdited=false;run();}});
+const dlg=$('methods');for(const id of ['methodOpen','methodFooter'])$(id).addEventListener('click',()=>dlg.showModal());$('methodClose').addEventListener('click',e=>{e.preventDefault();dlg.close();});dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close();});
+let repaintTimer;window.addEventListener('resize',()=>{clearTimeout(repaintTimer);repaintTimer=setTimeout(render,120);});loadAuto();
+</script>
+
+<script>
+/* Presentation-only navigation. Does not alter ZipfEngine, backtest logic, settings, or charts. */
+(function(){
+ const views = {
+  home: document.getElementById('homeView'),
+  analysis: document.getElementById('analysisView'),
+  methodology: document.getElementById('methodView')
+ };
+ const tabs=[...document.querySelectorAll('.site-navigation [data-page]')];
+ function selectView(){
+  const requested=location.hash.replace(/^#/,'');
+  const current=Object.hasOwn(views,requested)?requested:'home';
+  for(const [page,element] of Object.entries(views))element.hidden=page!==current;
+  for(const item of tabs){
+   const selected=item.dataset.page===current;
+   item.classList.toggle('active',selected);
+   if(selected)item.setAttribute('aria-current','page');
+   else item.removeAttribute('aria-current');
+  }
+  document.title=current==='home'?"Zipf's Law Analysis & Market Volatility":current==='analysis'?"Analysis | Zipf's Law Analysis & Market Volatility":"Methodology | Zipf's Law Analysis & Market Volatility";
+  window.scrollTo(0,0);
+  if(current==='analysis'){
+   // Charts are initialized while the home screen is visible; repaint after
+   // the chart panels become visible. Original resize handler owns redraws.
+   requestAnimationFrame(()=>window.dispatchEvent(new Event('resize')));
+  }
+ }
+ window.addEventListener('hashchange',selectView);
+ selectView();
+})();
+</script>
+</body></html>
